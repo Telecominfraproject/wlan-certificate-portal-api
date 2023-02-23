@@ -1,0 +1,1358 @@
+openapi: 3.0.1
+info:
+  title: Certificate Management Portal
+  description: An API to manage the life cycle of OpenWifi PKI Certificates
+  version: 2.9.0
+  contact:
+    name: Arilia Support
+    email: tip.portal@arilia.com
+    url: https://www.ucentral.info/support
+
+servers:
+  - url: 'https://tipcertificates.arilia.io:16061/api/v1'
+
+security:
+  - bearerAuth: []
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    NotFound:
+      description: The specified resource was not found.
+      content:
+        application/json:
+          schema:
+            properties:
+              ErrorCode:
+                type: integer
+              ErrorDetails:
+                type: string
+              ErrorDescription:
+                type: string
+
+    Unauthorized:
+      description: The requested does not have sufficient rights to perform the operation.
+      content:
+        application/json:
+          schema:
+            properties:
+              ErrorCode:
+                type: integer
+                enum:
+                  - 0     # Success
+                  - 1     # PASSWORD_CHANGE_REQUIRED,
+                  - 2     # INVALID_CREDENTIALS,
+                  - 3     # PASSWORD_ALREADY_USED,
+                  - 4     # USERNAME_PENDING_VERIFICATION,
+                  - 5     # PASSWORD_INVALID,
+                  - 6     # INTERNAL_ERROR,
+                  - 7     # ACCESS_DENIED,
+                  - 8     # INVALID_TOKEN
+                  - 9     # EXPIRED_TOKEN
+                  - 10    # RATE_LIMIT_EXCEEDED
+                  - 11    # BAD_MFA_TRANSACTION
+                  - 12    # MFA_FAILURE
+                  - 13    # SECURITY_SERVICE_UNREACHABLE
+                  - 14    # CANNOT_REFRESH_TOKEN
+                  - 15    # ACCOUNT_SUSPENDED
+              ErrorDetails:
+                type: string
+              ErrorDescription:
+                type: string
+
+    Success:
+      description: The requested operation was performed.
+      content:
+        application/json:
+          schema:
+            properties:
+              Operation:
+                type: string
+              Details:
+                type: string
+              Code:
+                type: integer
+
+    BadRequest:
+      description: The requested operation failed.
+      content:
+        application/json:
+          schema:
+            properties:
+              ErrorCode:
+                type: integer
+              ErrorDetails:
+                type: string
+              ErrorDescription:
+                type: integer
+
+  schemas:
+
+    SystemEndpoint:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: integer
+        vendor:
+          type: string
+        uri:
+          type: string
+          format: uri
+        authenticationType:
+          type: string
+
+    SystemEndpointList:
+      type: object
+      properties:
+        endpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/SystemEndpoint'
+
+    CertificateEntry:
+      description: The basic structure of a certificate.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        entity:
+          type: string
+          format: uuid
+          readOnly: true
+          description: This is the UUID of the entity that owns this certificate
+        creator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: This is the UUID of the creator of this certificate
+        type:
+          type: string
+          enum:
+            - device
+            - server
+          readOnly: true
+          default: device
+          description: Type of certificate, which represents either a device or a server.
+          example: Must be set during a certification creation, otherwise this is always readonly
+        status:
+          type: string
+          readOnly: true
+          description: The status of this certificate. Could be revoked, issued, etc.
+        certificate:
+          type: string
+          readOnly: true
+          description: The string that represents the entire certificate in .pem format
+        key:
+          type: string
+          readOnly: true
+          description: The string that represents the entire private key associated with this certificate in .pem format
+        devid:
+          type: string
+          readOnly: true
+          description: The DigiCert device ID associated with the certificate
+        cas:
+          type: string
+          readOnly: true
+          description: The string that represents the CAs associated with this certificate in .pem format
+        manufacturer:
+          type: string
+          description: A string representing the manufacturer of the device associated with this certificate
+          example: EdgeCore
+        model:
+          type: string
+          description: A string representing the model of the device associated with this certificate
+          example: eap_101
+        redirector:
+          type: string
+          description: A domain name pointing to the OpenWifi Controller for this device
+          example: openwifi.example.com
+        commonName:
+          type: string
+          readOnly: true
+          description: The unique name associated with this certificate. Must be either a serial number or a domain name
+          example: must be set during a certification creation, serialNumber (device) or domain name (server)
+        certificateId:
+          type: string
+          format: uuid
+          description: The DigiCert UUID associated with this certificate
+          readOnly: true
+        batch:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The batch that created this certificate or empty
+        created:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Epochtime when this entry was created
+        modified:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Epochtime when this entry was last modified
+        revoked:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Epochtime when this entry was last revoked (or 0 if never revoked)
+        revokeCount:
+          type: integer
+          format: int64
+          readOnly: true
+          description: How many times this certificate was revoked
+        synched:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Epochtime when this entry's details were successfully fetched from DigiCert (or 0 if never fetched)
+        expiryDate:
+          type: integer
+          format: int64
+          readOnly: true
+          description: Epochtime when this entry expires
+        unMutable:
+          type: boolean
+          default: false
+          description: Do not allow this certificate to be relocated to another entity
+        originalEntity:
+          type: string
+          format: uuid
+          readOnly: true
+          description: This is the UUID of the original entity that owned this certificate
+        originalCreator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: This is the UUID of the original creator of this certificate
+        originalRedirector:
+          type: string
+          readOnly: true
+          description: This is the original redirector at the time of this certificate's creation
+
+    CertificateEntryList:
+      description: A list of certificates
+      type: object
+      properties:
+        certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/CertificateEntry'
+
+    EntityEntry:
+      description: The basic information describing an entity allowed to create and manage its own certificates.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: UUID of the entity
+        creator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: UUID of the user who created this entity
+        name:
+          type: string
+          description: A human readable name for the entity
+        description:
+          type: string
+          description: A brief description or longer name for the entity
+        defaultRedirector:
+          type: string
+          description: One or many domain names separated by semi-colons (;) to be used as default redirectors for this entity's certificates
+        apiKey:
+          type: string
+          description: unused
+        serverEnrollmentProfile:
+          type: string
+          description: unused
+        clientEnrollmentProfile:
+          type: string
+          description: unused
+        organization:
+          type: string
+          description: name of the organization that this entity belongs to
+        digicertDivisionId:
+          type: string
+          format: uuid
+          description: The DigiCert division ID associated with this entity
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteInfo'
+        suspended:
+          type: boolean
+          default: false
+          description: If this organization was suspended, it may no longer create or modify anything
+        deleted:
+          type: boolean
+          default: false
+          description: If this organization was deleted, it may no longer create or modify anything
+        created:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When this entity was created (epoch time)
+        modified:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When this entity was last modified (epoch time)
+        dailyTransferQuota:
+          type: integer
+          description: The number of transfers this entity is allowed to perform within 24 hours
+        suspendedTransfers:
+          type: boolean
+          description: Is this entity's ability to transfer certificates blocked
+        defaultContact:
+          type: string
+          format: uuid
+          description: The user ID of the default contact for this entity, used to decide which user should receive this entity's communications
+
+    EntityEntryList:
+      description: A list of entities.
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityEntry'
+
+    BatchEntry:
+      description: The basic information of a batch of device certificates
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for this batch. Associated at creation.
+        entity:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID of the entity owning this batch. Associated at creation.
+        creator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID of the creator of this batch. Associated at creation.
+        name:
+          type: string
+          description: A human readable name for this batch
+        description:
+          type: string
+          description: A brief description or longer name for this batch
+        manufacturer:
+          type: string
+          description: A string to describe the manufacturer of all the devices in this batch
+        model:
+          type: string
+          description: A string to describe the model of all the devices in this batch
+        redirector:
+          type: string
+          description: A string to describe the redirector of all the devices in this batch
+          example: openwifi.example.com
+        commonNames:
+          type: array
+          items:
+            type: string
+          description: The list of serial numbers of all the devices in ths batch
+        jobHistory:
+          type: array
+          items:
+            type: string
+            format: uuid
+          readOnly: true
+          description: The list of UUIDs of all the jobs that have operated on this batch
+        notes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NoteInfo'
+          description: Additional notes about the content of this batch of devices
+        submitted:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When the batch was created (epoch time)
+        started:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When the batch's operation was started (epoch time)
+        completed:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When the batch's operation was completed (epoch time)
+        modified:
+          type: integer
+          format: int64
+          readOnly: true
+          description: When the batch was last modified (epoch time)
+
+    BatchEntryList:
+      description: A list of batch entries.
+      type: object
+      properties:
+        batches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchEntry'
+
+    JobEntry:
+      description: The information regarding a job. A job is a process that was run for a batch of devices.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for this job. Associated at creation.
+        entity:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for the entity of this job. Associated at creation
+        creator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for the creator of this job. Associated at creation
+        batch:
+          type: string
+          format: uuid
+          description: The UUID for the batch of this job. Associated at creation.
+          readOnly: true
+        commonNames:
+          type: array
+          items:
+            type: string
+          description: The list of serial numbers that were used in this job
+          readOnly: true
+        completedNames:
+          type: array
+          items:
+            type: string
+          description: The list of serial numbers that were successfully processed during this job
+          readOnly: true
+        errorNames:
+          type: array
+          items:
+            type: string
+          description: The list of serial numbers that caused errors during this job
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+          description: A string describing the status of this job
+        command:
+          type: string
+          enum:
+            - no_command
+            - create_batch
+            - delete_batch
+            - change_batch
+            - revoke_batch
+            - download_batch
+          description: The command that caused this job
+          readOnly: true
+        parameters:
+          type: string
+        submitted:
+          type: integer
+          format: int64
+          description: When the job was submitted (epoch time)
+          readOnly: true
+        started:
+          type: integer
+          format: int64
+          description: When the job was started (epoch time)
+          readOnly: true
+        completed:
+          type: integer
+          format: int64
+          description: When the job was completed (epoch time)
+          readOnly: true
+        requesterUsername:
+          type: string
+          format: email
+          description: The user that created this job
+          readOnly: true
+
+    CertificateTransfer:
+      description: The information regarding a certificate transfer/dispute request.
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for this reallocation. Associated at creation.
+        entity:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID for entity of the reallocator. Associated at creation
+        creator:
+          type: string
+          format: uuid
+          readOnly: true
+          description: The UUID of the user that created this reallocation. Associated at creation
+        commonName:
+          type: string
+          readOnly: true
+          description: The Serial Number of the device that was reallocated
+        reallocationDate:
+          type: integer
+          format: int64
+          description: When the device was reallocated (epoch time)
+        originalRedirector:
+          type: string
+          description: The original hostname of the redirector
+        newRedirector:
+          type: string
+          description: The new hostname of the redirector
+        reason:
+          type: string
+          description: A brief description for the reallocation
+        originalOwnerNotified:
+          type: boolean
+          description: Has the original owner of the certificate been notified
+        disputed:
+          type: boolean
+          description: Has this transfer been contested by the original owner
+        disputedDate:
+          type: integer
+          format: int64
+          description: When this transfer was contested (epoch time)
+        rolledBack:
+          type: boolean
+          description: Has this transfer been cancelled and rolled back (certificate returned to original owner with it's original redirector)
+        rolledBackDate:
+          type: integer
+          format: int64
+          description: When the device was rolled back (epoch time)
+        disputedResolved:
+          type: boolean
+          description: if this device has been disputed and had the dispute resolved
+        resolutionDate:
+          type: integer
+          format: int64
+          description: When the dispute was resolved (epoch time)
+        resolutionComment:
+          type: string
+          description: Any information that might be relevant about this dispute and it's resolution
+
+    CertificateTransferList:
+      description: A list of transfer requests.
+      type: object
+      properties:
+        transfers:
+          type: array
+          items:
+            $ref: '#/components/schemas/CertificateTransfer'
+
+    NoteInfo:
+      type: object
+      properties:
+        created:
+          type: integer
+          format: int64
+        createdBy:
+          type: string
+        note:
+          type: string
+
+paths:
+
+  /certificates:
+    get:
+      tags:
+        - Certificates
+      summary: Retrieve a list of certificates.
+      operationId: getCertificates
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: limit
+          description: The numbers of items to return, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          description: Selecting this option means the newest record will be returned. Use limit to select how many.
+          name: filter
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: select
+          description: Get only the provided ids
+          schema:
+            type: string
+            example: id1,id2,id3,id4,id5
+          required: false
+        - in: query
+          name: type
+          description: Get only certificates of this type
+          schema:
+            type: string
+            enum:
+              - device
+              - server
+          required: false
+        - in: query
+          name: entity
+          description: Get only certificates of this entity
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - in: query
+          name: totalOnly
+          description: Get only the total number of records
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          $ref: '#/components/schemas/CertificateEntryList'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /certificate/{id}:
+    get:
+      tags:
+        - Certificates
+      operationId: getCertificate
+      summary: Retrieve a single certificate.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+        - in: query
+          name: download
+          description: If true, the certificate's will be returned as a .tag.gz file
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          $ref: '#/components/schemas/CertificateEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Certificates
+      operationId: deleteCertificate
+      summary: Delete a single certificate.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        204:
+          $ref: '#/components/responses/Success'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Certificates
+      operationId: updateCertificate
+      summary: Modify or run a command on a single certificate.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+        - in: query
+          name: command
+          description: Command to run on the certificate
+          schema:
+            type: string
+            enum:
+              - revoke
+              - renew
+              - recreate
+          required: false
+        - in: query
+          name: entity
+          schema:
+            type: string
+            format: uuid
+          required: false
+          example: only required when root must modify a certificate on behalf of an entity
+      requestBody:
+        description: Certificate details (some fields are ignored during update)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CertificateEntry'
+      responses:
+        200:
+          $ref: '#/components/schemas/CertificateEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Certificates
+      operationId: createNewCertificate
+      summary: Create a single certificate
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+          example: set to 0 when creating a certificate
+        - in: query
+          name: commonName
+          schema:
+            type: string
+            example: serialNumber of the device or domain name of the server
+          required: true
+        - in: query
+          name: entity
+          schema:
+            type: string
+            format: uuid
+          required: false
+          example: only allowed when root must create a certificate on behalf of an entity
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CertificateEntry'
+                - $ref: '#/components/responses/Success'
+      responses:
+        200:
+          $ref: '#/components/schemas/CertificateEntry'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+
+  /batches:
+    get:
+      tags:
+        - Batches
+      summary: Retrieve a list of batches
+      operationId: getBatches
+      parameters:
+        - in: query
+          name: offset
+          description: The numbers of items to skip, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: limit
+          description: The numbers of items to return, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: select
+          description: Return only the batches corresponding to the provided UUIDs.
+          schema:
+            type: string
+            example: id1,id2,id3,id4,id5
+          required: false
+        - in: query
+          name: entity
+          description: Return only this entity's batches
+          schema:
+            type: string
+          required: false
+      responses:
+        200:
+          $ref: '#/components/schemas/BatchEntryList'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /batch/{id}:
+    get:
+      tags:
+        - Batches
+      operationId: getBatch
+      summary: Retrieve the information for a single batch.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+        - in: query
+          name: download
+          description: If true, the batch's certificates will be returned as a .tag.gz file
+          schema:
+            type: boolean
+          required: false
+      responses:
+        200:
+          $ref: '#/components/schemas/BatchEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Batches
+      operationId: deleteBatch
+      summary: Delete a single batch.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        204:
+          $ref: '#/components/responses/Success'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Batches
+      operationId: createBatch
+      summary: Create a single batch.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        description: Batch details (some fields are ignored during creation)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEntry'
+      responses:
+        200:
+          $ref: '#/components/schemas/BatchEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Batches
+      operationId: updateBatch
+      summary: Modify a single batch.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+        - in: query
+          name: command
+          description: The command to execute on the batch
+          schema:
+            type: string
+            enum:
+              - create
+              - revoke
+              - delete
+              - change
+          required: false
+        - in: query
+          name: notify_email
+          description: The email addresses to notify on batch operation completion, separated by commas
+          schema:
+            type: array
+            items:
+              type: string
+              format: email
+          required: false
+          example: user1@example.com,user2@support.com
+        - in: query
+          name: notify_sms
+          description: The phone numbers to notify on batch operation completion, separated by commas
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+          example: +12345678901,+122993883838,+33229948894
+      requestBody:
+        description: Batch details (some fields are ignored during update)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchEntry'
+      responses:
+        200:
+          $ref: '#/components/schemas/BatchEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /entities:
+    get:
+      tags:
+        - Entities
+      summary: Retrieve a list of entities
+      operationId: getEntities
+      parameters:
+        - in: query
+          name: offset
+          description: The numbers of items to skip, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: limit
+          description: The numbers of items to return, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: select
+          description: Return only the entities corresponding to the provided UUIDs.
+          schema:
+            type: string
+            example: id1,id2,id3,id4,id5
+          required: false
+      responses:
+        200:
+          $ref: '#/components/schemas/EntityEntryList'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /entity/{id}:
+    get:
+      tags:
+        - Entities
+      operationId: getEntity
+      summary: Retrieve an entity's information.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        200:
+          $ref: '#/components/schemas/EntityEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Entities
+      operationId: deleteEntity
+      summary: Delete a single entity.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        204:
+          $ref: '#/components/responses/Success'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Entities
+      operationId: createEntity
+      summary: Create a single entity.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        description: Entity details (some fields are ignored during creation)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityEntry'
+      responses:
+        200:
+          $ref: '#/components/schemas/EntityEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Entities
+      operationId: updateEntry
+      summary: Modify a single entity.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      requestBody:
+        description: Entity details (some fields are ignored during update)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EntityEntry'
+      responses:
+        200:
+          $ref: '#/components/schemas/EntityEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /jobs:
+    get:
+      tags:
+        - Jobs
+      operationId: getJobs
+      summary: Retrieve the list of certificate jobs.
+      parameters:
+        - in: query
+          name: offset
+          description: The numbers of items to skip, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: limit
+          description: The numbers of items to return, used for pagination
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          name: select
+          description: Return only the jobs corresponding to the provided UUIDs.
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+            example: id1,id2,id3,id4,id5
+          required: false
+        - in: query
+          description: Return only the jobs corresponding to the provided entity.
+          name: entity
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - in: query
+          description: Return only the jobs corresponding to the provided batch.
+          name: batch
+          schema:
+            type: string
+            format: uuid
+          required: false
+      responses:
+        200:
+          description: Return a list of jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /job/{id}:
+    get:
+      tags:
+        - Jobs
+      operationId: getJob
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        200:
+          $ref: '#/components/schemas/JobEntry'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Jobs
+      operationId: deleteJob
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        204:
+          $ref: '#/components/responses/Success'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /transfer/{serialNumber}:
+    put:
+      tags:
+        - Transfers
+      summary: Use this API to transfer a another entity's device certificate to your own entity with a new redirector.
+      operationId: transferCertificate
+      parameters:
+        - in: path
+          name: serialNumber
+          schema:
+            type: string
+            example:
+              FC00991ABCDF
+            description: The serial number for the device you wish to transfer to yourself
+          required: true
+        - in: query
+          name: cancel
+          schema:
+            type: boolean
+          description: If you would like to cancel a previously filed transfer. This would be used if the transfer was filed in error.
+        - in: query
+          name: id
+          schema:
+            type: string
+            format: uuid
+          description: The transfer UUID you wish to cancel. This must be the UUID of the transfer you wish to cancel done on the provided serial number
+      requestBody:
+        description: You must add this payload when transferring a certificate
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                newRedirector:
+                  type: string
+                  description: The new redirector
+                  example:
+                    bighost.example.com
+                reason:
+                  type: string
+                  description: A brief description for the transfer. This cannot be empty.
+      responses:
+        200:
+          description: If the transfer was successful, you will receive the completed transfer
+          $ref: '#/components/schemas/CertificateTransfer'
+        400:
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /transfers:
+    get:
+      tags:
+        - Transfers
+      summary: You can request a list of current transfers for your own entity and globally
+      operationId: getTransfers
+      parameters:
+        - in: query
+          description: Pagination start (starts at 0. If not specified, 0 is assumed)
+          name: offset
+          schema:
+            type: integer
+          required: false
+        - in: query
+          description: Maximum number of entries to return (if absent, no limit is assumed)
+          name: limit
+          schema:
+            type: integer
+          required: false
+        - in: query
+          description: return entries created after this date, can be used with endDate
+          name: startDate
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          description: return entries created before this date, can be used with startDate
+          name: endDate
+          schema:
+            type: integer
+            format: int64
+          required: false
+        - in: query
+          description: return entries only for this entity
+          name: entity
+          schema:
+            type: string
+            format: uuid
+          required: false
+        - in: query
+          description: return entries only for this device
+          name: serialNumber
+          schema:
+            type: string
+          required: false
+        - in: query
+          description: return only the transfers in dispute
+          name: inDispute
+          schema:
+            type: boolean
+            default: false
+          required: false
+      responses:
+        200:
+          description: Upon success return a list of transfer entries
+          $ref: '#/components/schemas/CertificateTransferList'
+        400:
+          description: Something was not setup properly in the request. The error code should offer some help.
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+
+  /transfers/{id}:
+    get:
+      summary: Get all the details of a transfer
+      operationId: getTransfer
+      tags:
+        - Transfers
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        200:
+          description: Upon success return a list of transfer entries
+          $ref: '#/components/schemas/CertificateTransfer'
+        400:
+          description: Something was not setup properly in the request. The error code should offer some help.
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Change the specified transfer
+      operationId: modifyTransfer
+      tags:
+        - Transfers
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            format: uuid
+          required: true
+        - in: query
+          name: operation
+          schema:
+            type: string
+            enum:
+              - resolve
+              - rollback
+          required: true
+        - in: query
+          name: comment
+          description: A brief description, this is required for resolve and rollback
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: Upon success return the transfer information
+          $ref: '#/components/schemas/CertificateTransfer'
+        400:
+          description: Something was not setup properly in the request. The error code should offer some help.
+          $ref: '#/components/responses/BadRequest'
+        403:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
