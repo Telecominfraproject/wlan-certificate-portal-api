@@ -1680,7 +1680,7 @@ ul.nav-tabs {
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/batch/{id}" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/batch/{id}" \
  -d '{
   &quot;redirector&quot; : &quot;openwifi.example.com&quot;,
   &quot;creator&quot; : &quot;046b6c7f-0b8a-43b9-b35d-6489e6daee91&quot;,
@@ -2237,7 +2237,7 @@ $(document).ready(function() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/batch/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/batch/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Batches-deleteBatch-0-java">
@@ -2760,7 +2760,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/batch/{id}?download=true"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/batch/{id}?download=true"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Batches-getBatch-0-java">
@@ -3273,7 +3273,7 @@ If true, the batch&#39;s certificates will be returned as a .tag.gz file
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/batches?offset=789&limit=789&select=id1,id2,id3,id4,id5&entity=entity_example"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/batches?offset=789&limit=789&select=id1,id2,id3,id4,id5&entity=entity_example"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Batches-getBatches-0-java">
@@ -3843,7 +3843,7 @@ Return only this entity&#39;s batches
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/batch/{id}?command=command_example&notify_email=user1@example.com,user2@support.com&notify_sms=+12345678901,+122993883838,+33229948894" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/batch/{id}?command=command_example&notify_email=user1@example.com,user2@support.com&notify_sms=+12345678901,+122993883838,+33229948894" \
  -d '{
   &quot;redirector&quot; : &quot;openwifi.example.com&quot;,
   &quot;creator&quot; : &quot;046b6c7f-0b8a-43b9-b35d-6489e6daee91&quot;,
@@ -4504,7 +4504,7 @@ The phone numbers to notify on batch operation completion, separated by commas
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/certificate/{id}?commonName=serialNumber of the device or domain name of the server&entity=only allowed when root must create a certificate on behalf of an entity" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/certificate/{id}?commonName=serialNumber of the device or domain name of the server&entity=only allowed when root must create a certificate on behalf of an entity" \
  -d ''
 </code></pre>
                           </div>
@@ -5103,7 +5103,7 @@ $(document).ready(function() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/certificate/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/certificate/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Certificates-deleteCertificate-0-java">
@@ -5626,7 +5626,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/certificate/{id}?download=true"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/certificate/{id}?download=true"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Certificates-getCertificate-0-java">
@@ -6139,7 +6139,7 @@ If true, the certificate&#39;s will be returned as a .tag.gz file
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/certificates?offset=789&limit=789&filter=filter_example&select=id1,id2,id3,id4,id5&type=type_example&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&totalOnly=true"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/certificates?offset=789&limit=789&filter=filter_example&select=id1,id2,id3,id4,id5&type=type_example&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&totalOnly=true"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Certificates-getCertificates-0-java">
@@ -6802,7 +6802,7 @@ Get only the total number of records
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/certificate/{id}?command=command_example&entity=only required when root must modify a certificate on behalf of an entity" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/certificate/{id}?command=command_example&entity=only required when root must modify a certificate on behalf of an entity" \
  -d '{
   &quot;devid&quot; : &quot;devid&quot;,
   &quot;commonName&quot; : &quot;must be set during a certification creation, serialNumber (device) or domain name (server)&quot;,
@@ -7432,7 +7432,7 @@ Command to run on the certificate
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/entity/{id}" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/entity/{id}" \
  -d '{
   &quot;creator&quot; : &quot;046b6c7f-0b8a-43b9-b35d-6489e6daee91&quot;,
   &quot;defaultRedirector&quot; : &quot;defaultRedirector&quot;,
@@ -7992,7 +7992,7 @@ $(document).ready(function() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/entity/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/entity/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Entities-deleteEntity-0-java">
@@ -8515,7 +8515,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/entities?offset=789&limit=789&select=id1,id2,id3,id4,id5"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/entities?offset=789&limit=789&select=id1,id2,id3,id4,id5"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Entities-getEntities-0-java">
@@ -9054,7 +9054,7 @@ Return only the entities corresponding to the provided UUIDs.
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/entity/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/entity/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Entities-getEntity-0-java">
@@ -9529,7 +9529,7 @@ pub fn main() {
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/entity/{id}" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/entity/{id}" \
  -d '{
   &quot;creator&quot; : &quot;046b6c7f-0b8a-43b9-b35d-6489e6daee91&quot;,
   &quot;defaultRedirector&quot; : &quot;defaultRedirector&quot;,
@@ -10092,7 +10092,7 @@ $(document).ready(function() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/job/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/job/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Jobs-deleteJob-0-java">
@@ -10612,7 +10612,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/job/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/job/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Jobs-getJob-0-java">
@@ -11083,7 +11083,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/jobs?offset=789&limit=789&select=id1,id2,id3,id4,id5&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&batch=38400000-8cf0-11bd-b23e-10b96e4ef00d"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/jobs?offset=789&limit=789&select=id1,id2,id3,id4,id5&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&batch=38400000-8cf0-11bd-b23e-10b96e4ef00d"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Jobs-getJobs-0-java">
@@ -11743,7 +11743,7 @@ Return only the jobs corresponding to the provided batch.
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/transfers/{id}"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/transfers/{id}"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Transfers-getTransfer-0-java">
@@ -12279,7 +12279,7 @@ pub fn main() {
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/transfers?offset=56&limit=56&startDate=789&endDate=789&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&serialNumber=serialNumber_example&inDispute=true"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/transfers?offset=56&limit=56&startDate=789&endDate=789&entity=38400000-8cf0-11bd-b23e-10b96e4ef00d&serialNumber=serialNumber_example&inDispute=true"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Transfers-getTransfers-0-java">
@@ -13003,7 +13003,7 @@ return only the transfers in dispute
 -H "X-API-KEY: [[apiKey]]" \
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/transfers/{id}?operation=operation_example&comment=comment_example"
+ "https://tipcertificates.keys.tip.build:16061/api/v1/transfers/{id}?operation=operation_example&comment=comment_example"
 </code></pre>
                           </div>
                           <div class="tab-pane" id="examples-Transfers-modifyTransfer-0-java">
@@ -13610,7 +13610,7 @@ A brief description, this is required for resolve and rollback
  -H "Authorization: Bearer [[accessToken]]" \
  -H "Accept: application/json" \
  -H "Content-Type: application/json" \
- "https://tipcertificates.arilia.io:16061/api/v1/transfer/{serialNumber}?cancel=true&id=38400000-8cf0-11bd-b23e-10b96e4ef00d" \
+ "https://tipcertificates.keys.tip.build:16061/api/v1/transfer/{serialNumber}?cancel=true&id=38400000-8cf0-11bd-b23e-10b96e4ef00d" \
  -d ''
 </code></pre>
                           </div>
