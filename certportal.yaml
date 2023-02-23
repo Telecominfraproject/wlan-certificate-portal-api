@@ -9,7 +9,7 @@ info:
     url: https://www.ucentral.info/support
 
 servers:
-  - url: 'https://tipcertificates.arilia.io:16061/api/v1'
+  - url: 'https://tipcertificates.keys.tip.build:16061/api/v1'
 
 security:
   - bearerAuth: []
